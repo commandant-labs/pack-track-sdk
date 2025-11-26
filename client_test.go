@@ -13,10 +13,10 @@ func newTestEvent() Event {
 	return Event{
 		Timestamp: time.Now().UTC(),
 		Source:    Source{System: "test"},
-		Workflow:  Workflow{ID: "wf"},
+		Workflow:  Workflow{ID: "wf", RunID: "run-1"},
 		Actor:     Actor{Type: "agent", ID: "a1"},
 		Severity:  SeverityInfo,
-		Status:    StatusSuccess,
+		Status:    StatusOK,
 		Message:   "ok",
 	}
 }

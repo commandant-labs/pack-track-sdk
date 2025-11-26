@@ -18,9 +18,12 @@ const (
 type Status string
 
 const (
-	StatusRunning Status = "running"
-	StatusSuccess Status = "success"
-	StatusError   Status = "error"
+	StatusOK       Status = "ok"
+	StatusFailed   Status = "failed"
+	StatusSkipped  Status = "skipped"
+	StatusTimeout  Status = "timeout"
+	StatusRetrying Status = "retrying"
+	StatusUnknown  Status = "unknown"
 )
 
 // Source identifies the system emitting the event.

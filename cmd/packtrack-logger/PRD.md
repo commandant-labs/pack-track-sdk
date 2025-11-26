@@ -57,7 +57,7 @@ Out-of-scope (v1):
   - workflow.id (required), optional name/run_id/step_id,
   - actor.type, actor.id, optional display_name,
   - severity: debug|info|warn|error,
-  - status: success|running|error,
+  - status: ok|failed|skipped|timeout|retrying|unknown,
   - message: string,
   - metadata: object (optional), extra: object (optional).
 - CLI provides flags for all common fields; metadata/extra accepted as JSON.
@@ -74,7 +74,7 @@ packtrack-logger \
   --source-system my-service --source-env prod \
   --workflow-id wf-123 --workflow-name "Checkout" --run-id run-1 --step-id step-1 \
   --actor-type agent --actor-id a-42 --actor-display "cart-stepper" \
-  --severity info --status success \
+  --severity info --status ok \
   --message "checkout completed" \
   --metadata '{"cart_total":123.45,"currency":"USD"}'
 ```
@@ -109,7 +109,7 @@ packtrack-logger \
   - `--actor-id` string (required)
   - `--actor-display` string
   - `--severity` enum [debug|info|warn|error] (required)
-  - `--status` enum [success|running|error] (required)
+  - `--status` enum [ok|failed|skipped|timeout|retrying|unknown] (required)
   - `--message` string (required)
   - `--metadata` JSON object (string)
   - `--extra` JSON object (string)

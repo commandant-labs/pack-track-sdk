@@ -51,7 +51,7 @@ export PACKTRACK_WORKFLOW_ID=wf-1
 export PACKTRACK_ACTOR_TYPE=agent
 export PACKTRACK_ACTOR_ID=a-1
 export PACKTRACK_SEVERITY=info
-export PACKTRACK_STATUS=success
+export PACKTRACK_STATUS=ok
 packtrack-logger --message "Hello"
 ```
 See full CLI docs: cmd/packtrack-logger/README.md

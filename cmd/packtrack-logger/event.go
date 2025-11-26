@@ -25,6 +25,9 @@ func buildEventFromConfig(cfg *Config) (packtrack.Event, error) {
 	if cfg.WorkflowID == "" {
 		return packtrack.Event{}, fmt.Errorf("missing required --workflow-id")
 	}
+	if cfg.RunID == "" {
+		return packtrack.Event{}, fmt.Errorf("missing required --run-id")
+	}
 	if cfg.ActorType == "" {
 		return packtrack.Event{}, fmt.Errorf("missing required --actor-type")
 	}
@@ -49,7 +52,7 @@ func buildEventFromConfig(cfg *Config) (packtrack.Event, error) {
 	}
 	st := packtrack.Status(cfg.Status)
 	switch st {
-	case packtrack.StatusRunning, packtrack.StatusSuccess, packtrack.StatusError:
+	case packtrack.StatusOK, packtrack.StatusFailed, packtrack.StatusSkipped, packtrack.StatusTimeout, packtrack.StatusRetrying, packtrack.StatusUnknown:
 	default:
 		return packtrack.Event{}, fmt.Errorf("invalid --status: %s", cfg.Status)
 	}

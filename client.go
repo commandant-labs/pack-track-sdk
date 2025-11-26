@@ -55,11 +55,12 @@ func NewClient(opts ...Option) (Client, error) {
 }
 
 func (c *client) IngestEvent(ctx context.Context, e Event) (IngestResponse, error) {
-	payload, err := json.Marshal(e)
+	// API expects an array payload; wrap single event accordingly.
+	payload, err := json.Marshal([]Event{e})
 	if err != nil {
 		return IngestResponse{}, fmt.Errorf("marshal event: %w", err)
 	}
-	return c.send(ctx, payload, false)
+	return c.send(ctx, payload, true)
 }
 
 func (c *client) IngestBatch(ctx context.Context, events []Event) (IngestResponse, error) {

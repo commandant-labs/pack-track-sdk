@@ -74,7 +74,7 @@ Match the PackTrack event schema documented in README/docs (key fields below):
 - `workflow`: `{ id: string, name?: string, run_id?: string, step_id?: string }`
 - `actor`: `{ type: "agent"|"system"|string, id: string, display_name?: string }`
 - `severity`: `debug|info|warn|error`
-- `status`: `success|running|error|...`
+- `status`: `ok|failed|skipped|timeout|retrying|unknown`
 - `message`: string
 - `metadata`: object (optional)
 

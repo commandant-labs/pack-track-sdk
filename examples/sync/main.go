@@ -19,10 +19,10 @@ func main() {
 	ev := packtrack.Event{
 		Timestamp: time.Now().UTC(),
 		Source:    packtrack.Source{System: "example"},
-		Workflow:  packtrack.Workflow{ID: "wf-1"},
+		Workflow:  packtrack.Workflow{ID: "wf-1", RunID: "run-1"},
 		Actor:     packtrack.Actor{Type: "agent", ID: "example"},
 		Severity:  packtrack.SeverityInfo,
-		Status:    packtrack.StatusSuccess,
+		Status:    packtrack.StatusOK,
 		Message:   "hello from sync example",
 	}
 	ctx := context.Background()

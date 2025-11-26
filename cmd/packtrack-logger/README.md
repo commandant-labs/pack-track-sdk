@@ -17,10 +17,12 @@ The CLI checks environment variables first (flags override). Recommended minimal
 - PACKTRACK_API_KEY
 - PACKTRACK_SOURCE_SYSTEM
 - PACKTRACK_WORKFLOW_ID
+- PACKTRACK_RUN_ID
 - PACKTRACK_ACTOR_TYPE
+
 - PACKTRACK_ACTOR_ID
 - PACKTRACK_SEVERITY (debug|info|warn|error)
-- PACKTRACK_STATUS (success|running|error)
+- PACKTRACK_STATUS (ok|failed|skipped|timeout|retrying|unknown)
 
 Optional (commonly used):
 - PACKTRACK_BASE_URL (default https://pack.shimcounty.com)
@@ -32,10 +34,11 @@ Example .env snippet:
 export PACKTRACK_API_KEY=pt_live_XXXXXXXXXXXXXXXX
 export PACKTRACK_SOURCE_SYSTEM=my-service
 export PACKTRACK_WORKFLOW_ID=wf-123
+export PACKTRACK_RUN_ID=run-1
 export PACKTRACK_ACTOR_TYPE=agent
 export PACKTRACK_ACTOR_ID=a-42
 export PACKTRACK_SEVERITY=info
-export PACKTRACK_STATUS=success
+export PACKTRACK_STATUS=ok
 ```
 
 Full list of supported env vars (flags override):
@@ -59,7 +62,7 @@ packtrack-logger \
   --base-url https://pack.shimcounty.com \
   --source-system my-service --workflow-id wf-1 \
   --actor-type agent --actor-id a-1 \
-  --severity info --status success \
+  --severity info --status ok \
   --message "hello from CLI"
 ```
 
