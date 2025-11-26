@@ -115,3 +115,13 @@ packtrack-logger --dry-run --verbose --message "test only"
 make build-cli
 ./bin/packtrack-logger -version
 ```
+
+## Releases
+- Download prebuilt binaries from the GitHub Releases page for your OS/arch: darwin-amd64, darwin-arm64, linux-amd64, linux-arm64, windows-amd64, windows-arm64.
+- Each archive contains the `packtrack-logger` binary and READMEs. Verify with the provided `checksums.txt`.
+
+## Cutting a Release (maintainers)
+1) Update `cmd/packtrack-logger/version.go` if needed.
+2) Tag and push: `git tag vX.Y.Z && git push origin vX.Y.Z`.
+3) GitHub Actions will run GoReleaser and publish binaries to the tag's release.
+4) Optional: test locally without publishing: `goreleaser release --clean --skip=publish`.
