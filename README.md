@@ -35,6 +35,27 @@ _ = ac.Flush(ctx)
 _ = ac.Close(ctx)
 ```
 
+## CLI: packtrack-logger
+A companion CLI is included at `cmd/packtrack-logger` to submit events from the shell.
+
+Install:
+```
+go install github.com/commandant-labs/pack-track-sdk/cmd/packtrack-logger@latest
+```
+
+Environment-first defaults let you run with only a message when env is set:
+```
+export PACKTRACK_API_KEY=...
+export PACKTRACK_SOURCE_SYSTEM=my-service
+export PACKTRACK_WORKFLOW_ID=wf-1
+export PACKTRACK_ACTOR_TYPE=agent
+export PACKTRACK_ACTOR_ID=a-1
+export PACKTRACK_SEVERITY=info
+export PACKTRACK_STATUS=success
+packtrack-logger --message "Hello"
+```
+See full CLI docs: cmd/packtrack-logger/README.md
+
 ## Configuration
 - Base URL (default https://pack.shimcounty.com)
 - API Key (required) via `X-PackTrack-Key`

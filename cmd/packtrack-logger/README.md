@@ -9,11 +9,36 @@ go install github.com/commandant-labs/pack-track-sdk/cmd/packtrack-logger@latest
 ```
 
 ## Environment-First Defaults
-If your environment is fully configured, you can run:
+If your environment is fully configured, you can send an event with only a message:
 ```
 packtrack-logger --message "Hello"
 ```
-Environment variables checked (flags override):
+The CLI checks environment variables first (flags override). Recommended minimal set:
+- PACKTRACK_API_KEY
+- PACKTRACK_SOURCE_SYSTEM
+- PACKTRACK_WORKFLOW_ID
+- PACKTRACK_ACTOR_TYPE
+- PACKTRACK_ACTOR_ID
+- PACKTRACK_SEVERITY (debug|info|warn|error)
+- PACKTRACK_STATUS (success|running|error)
+
+Optional (commonly used):
+- PACKTRACK_BASE_URL (default https://pack.shimcounty.com)
+- PACKTRACK_METADATA, PACKTRACK_EXTRA (JSON)
+- PACKTRACK_USER_AGENT, PACKTRACK_IDEMPOTENCY_KEY
+
+Example .env snippet:
+```
+export PACKTRACK_API_KEY=pt_live_XXXXXXXXXXXXXXXX
+export PACKTRACK_SOURCE_SYSTEM=my-service
+export PACKTRACK_WORKFLOW_ID=wf-123
+export PACKTRACK_ACTOR_TYPE=agent
+export PACKTRACK_ACTOR_ID=a-42
+export PACKTRACK_SEVERITY=info
+export PACKTRACK_STATUS=success
+```
+
+Full list of supported env vars (flags override):
 - PACKTRACK_API_KEY, PACKTRACK_BASE_URL, PACKTRACK_TIMEOUT, PACKTRACK_RETRIES
 - PACKTRACK_BACKOFF_INITIAL, PACKTRACK_BACKOFF_MAX, PACKTRACK_JITTER
 - PACKTRACK_USER_AGENT, PACKTRACK_IDEMPOTENCY_KEY, PACKTRACK_GZIP
@@ -25,8 +50,9 @@ Environment variables checked (flags override):
 - PACKTRACK_FILE, PACKTRACK_STDIN, PACKTRACK_NDJSON
 - PACKTRACK_ASYNC, PACKTRACK_BATCH_SIZE, PACKTRACK_FLUSH_INTERVAL, PACKTRACK_QUEUE_CAPACITY
 
-## Usage (single event)
+## Examples
 
+Single event (flags):
 ```
 packtrack-logger \
   --api-key "$PACKTRACK_API_KEY" \
@@ -37,11 +63,45 @@ packtrack-logger \
   --message "hello from CLI"
 ```
 
-## From file / STDIN
+From JSON file:
+```
+# Single event object
+packtrack-logger --api-key "$PACKTRACK_API_KEY" --file ./event.json
 
-- Single event file: `packtrack-logger --api-key ... --file ./event.json`
-- JSON array file: `packtrack-logger --api-key ... --file ./events.json`
-- NDJSON stdin: `cat events.ndjson | packtrack-logger --api-key ... --stdin --ndjson`
+# JSON array of events
+packtrack-logger --api-key "$PACKTRACK_API_KEY" --file ./events.json
+```
+
+NDJSON from stdin:
+```
+cat events.ndjson | packtrack-logger --api-key "$PACKTRACK_API_KEY" --stdin --ndjson
+```
+
+Health check:
+```
+packtrack-logger --api-key "$PACKTRACK_API_KEY" --health --health-path /api/health
+```
+
+Async batching:
+```
+packtrack-logger --async --batch-size 100 --flush-interval 1s --queue-capacity 10000 \
+  --message "processed batch" \
+  # assumes environment provides required event fields
+```
+
+Gzip + Idempotency:
+```
+packtrack-logger --gzip --idempotency-key abc123 --message "compressed batch"
+```
+
+Dry-run and verbose:
+```
+packtrack-logger --dry-run --verbose --message "test only"
+```
+
+## Flags
+- Flags mirror the environment variables above; run `packtrack-logger -h` to see all flags.
+- Flags override environment values.
 
 ## Exit Codes
 - 0: success
@@ -49,3 +109,9 @@ packtrack-logger \
 - 2: SDK error (non-retryable)
 - 3: retries exhausted (retryable)
 - 4: input/read/parse error
+
+## Build From Source
+```
+make build-cli
+./bin/packtrack-logger -version
+```
