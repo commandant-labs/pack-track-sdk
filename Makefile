@@ -1,4 +1,4 @@
-.PHONY: all build test vet fmt tidy clean
+.PHONY: all build test vet fmt tidy clean lint
 
 all: build
 
@@ -6,7 +6,7 @@ build:
 	go build ./...
 
 test:
-	go test ./...
+	go test -race -cover ./...
 
 vet:
 	go vet ./...
@@ -16,6 +16,9 @@ fmt:
 
 tidy:
 	go mod tidy
+
+lint:
+	golangci-lint run --timeout=5m || true
 
 clean:
 	rm -rf bin build dist
