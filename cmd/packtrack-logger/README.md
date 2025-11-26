@@ -125,3 +125,4 @@ make build-cli
 2) Tag and push: `git tag vX.Y.Z && git push origin vX.Y.Z`.
 3) GitHub Actions will run GoReleaser and publish binaries to the tag's release.
 4) Optional: test locally without publishing: `goreleaser release --clean --skip=publish`.
+5) If your org restricts the default `GITHUB_TOKEN`, create a repo secret `GORELEASER_TOKEN` with a PAT (classic) that has `repo` scope; the workflow will use it automatically.
