@@ -1,35 +1,32 @@
 # PackTrack Integration Guide (Factory Team)
 
-This guide explains what PackTrack is and how the Factory team can log AI agent activity into PackTrack using the packtrack-logger CLI. It includes initial setup, environment variables, and common usage patterns.
+This standalone guide explains what PackTrack is and how the Factory team can log AI agent activity into PackTrack using the packtrack-logger CLI. It includes a brief platform overview, installation, full environment setup, and ready-to-run examples.
 
 ## What Is PackTrack?
 
-PackTrack is an observability platform for AI agent workflows. It captures structured events from your agents and services so you can:
+PackTrack is an observability platform for AI agent workflows. It ingests structured events from your agents/services so you can:
 - Trace workflows and steps across systems
-- Track status (running, success, error) and severity (debug, info, warn, error)
-- Attach structured metadata for debugging and analytics
+- Track status: running, success, error
+- Track severity: debug, info, warn, error
+- Attach structured metadata (order IDs, robot IDs, durations, etc.) for analysis
 
-You integrate by sending JSON events to PackTrack's ingest API. This repo provides a Go SDK and a CLI, packtrack-logger, that wraps the SDK for quick adoption from scripts and services.
+Events are sent via HTTPS to PackTrack's ingest API. This repository provides a CLI (packtrack-logger) that wraps the official Go SDK to submit events reliably with retries and backoff.
 
-## What Is packtrack-logger?
+## What You Will Do
 
-packtrack-logger is a small command-line tool included in this repo (cmd/packtrack-logger) that submits events to PackTrack via the Go SDK. With environment variables set, you can send an event with a single flag:
-
-```
-packtrack-logger --message "Hello"
-```
-
-It supports single events, JSON files (single or array), and NDJSON (newline-delimited JSON) for batches. Retries, backoff with jitter, gzip, and idempotency are supported.
+- Install the packtrack-logger CLI
+- Configure environment variables once (environment-first)
+- Call the CLI from your agents/scripts to emit events (as simple as: `packtrack-logger --message "Hello"`)
 
 ## Install the CLI
 
-Option 1: Go install (requires Go 1.21+)
+Option A: Go install (requires Go 1.21+)
 ```
 go install github.com/commandant-labs/pack-track-sdk/cmd/packtrack-logger@latest
 ```
-This installs packtrack-logger into your GOPATH/bin (ensure it is on PATH).
+Ensure your `$GOPATH/bin` or `$(go env GOPATH)/bin` is on your PATH.
 
-Option 2: Build from source
+Option B: Build from source
 ```
 make build-cli
 ./bin/packtrack-logger -version
@@ -37,23 +34,22 @@ make build-cli
 
 ## Event Model (Summary)
 
-An event has the following key fields (mapped by the CLI):
-- timestamp (RFC3339) — default now (UTC)
-- source: system (required), env (optional)
-- workflow: id (required), name (optional), run_id (optional), step_id (optional)
-- actor: type (required), id (required), display_name (optional)
+Each event has the following key fields:
+- timestamp: RFC3339 string (default: now in UTC)
+- source: { system (required), env (optional) }
+- workflow: { id (required), name (optional), run_id (optional), step_id (optional) }
+- actor: { type (required), id (required), display_name (optional) }
 - severity: debug | info | warn | error (required)
 - status: success | running | error (required)
-- message: short human-readable message (required)
+- message: short human-readable string (required)
 - metadata: JSON object (optional)
 - extra: JSON object (optional)
 
-See cmd/packtrack-logger/README.md for full details.
+## Environment Setup (Environment-First)
 
-## Initial Setup (Environment-First)
+Set these environment variables so you can run with only a `--message` flag.
 
-Set environment variables first so engineers can run the CLI with only a message. Minimal recommended set:
-
+Minimal recommended set:
 ```
 export PACKTRACK_API_KEY=pt_live_XXXXXXXXXXXXXXXX
 export PACKTRACK_SOURCE_SYSTEM=factory-agents
@@ -63,56 +59,120 @@ export PACKTRACK_ACTOR_ID=agent-123
 export PACKTRACK_SEVERITY=info
 export PACKTRACK_STATUS=running
 ```
+Common optional:
+- `PACKTRACK_BASE_URL` (default `https://pack.shimcounty.com`)
+- `PACKTRACK_SOURCE_ENV` (e.g., prod, staging)
+- `PACKTRACK_WORKFLOW_NAME`, `PACKTRACK_RUN_ID`, `PACKTRACK_STEP_ID`
+- `PACKTRACK_ACTOR_DISPLAY` (friendly name)
+- `PACKTRACK_METADATA`, `PACKTRACK_EXTRA` (JSON strings)
+- `PACKTRACK_IDEMPOTENCY_KEY` (optional dedupe ID), `PACKTRACK_GZIP` ("true" to compress batches)
 
-Common optional variables:
-- PACKTRACK_BASE_URL (default https://pack.shimcounty.com)
-- PACKTRACK_SOURCE_ENV (e.g., prod, staging)
-- PACKTRACK_WORKFLOW_NAME, PACKTRACK_RUN_ID, PACKTRACK_STEP_ID
-- PACKTRACK_ACTOR_DISPLAY (friendly name)
-- PACKTRACK_METADATA (JSON), PACKTRACK_EXTRA (JSON)
-- PACKTRACK_IDEMPOTENCY_KEY, PACKTRACK_GZIP
+Full environment variable list (flags override env):
+- Core:
+  - `PACKTRACK_API_KEY`, `PACKTRACK_BASE_URL`, `PACKTRACK_TIMEOUT`, `PACKTRACK_RETRIES`
+  - `PACKTRACK_BACKOFF_INITIAL`, `PACKTRACK_BACKOFF_MAX`, `PACKTRACK_JITTER`
+  - `PACKTRACK_USER_AGENT`, `PACKTRACK_IDEMPOTENCY_KEY`, `PACKTRACK_GZIP`
+  - `PACKTRACK_VERBOSE`, `PACKTRACK_DRY_RUN`, `PACKTRACK_HEALTH`, `PACKTRACK_HEALTH_ENABLE`, `PACKTRACK_HEALTH_PATH`
+- Event:
+  - `PACKTRACK_TIMESTAMP`, `PACKTRACK_SOURCE_SYSTEM`, `PACKTRACK_SOURCE_ENV`
+  - `PACKTRACK_WORKFLOW_ID`, `PACKTRACK_WORKFLOW_NAME`, `PACKTRACK_RUN_ID`, `PACKTRACK_STEP_ID`
+  - `PACKTRACK_ACTOR_TYPE`, `PACKTRACK_ACTOR_ID`, `PACKTRACK_ACTOR_DISPLAY`
+  - `PACKTRACK_SEVERITY`, `PACKTRACK_STATUS`, `PACKTRACK_MESSAGE`, `PACKTRACK_METADATA`, `PACKTRACK_EXTRA`
+- Input:
+  - `PACKTRACK_FILE`, `PACKTRACK_STDIN`, `PACKTRACK_NDJSON`
+- Async (optional):
+  - `PACKTRACK_ASYNC`, `PACKTRACK_BATCH_SIZE`, `PACKTRACK_FLUSH_INTERVAL`, `PACKTRACK_QUEUE_CAPACITY`
 
-Full env variable list is documented in cmd/packtrack-logger/README.md. Flags always override env values.
+Windows PowerShell equivalents:
+```
+$env:PACKTRACK_API_KEY = "pt_live_XXXXXXXXXXXXXXXX"
+$env:PACKTRACK_SOURCE_SYSTEM = "factory-agents"
+$env:PACKTRACK_WORKFLOW_ID = "factory-workflow"
+$env:PACKTRACK_ACTOR_TYPE = "agent"
+$env:PACKTRACK_ACTOR_ID = "agent-123"
+$env:PACKTRACK_SEVERITY = "info"
+$env:PACKTRACK_STATUS = "running"
+```
 
-## Quick Start
+## Quick Start Commands
 
-1) Export env vars (as above)
-2) Send a message:
+Send a basic event using env vars + message:
 ```
 packtrack-logger --message "agent started"
 ```
-3) Send success and error events by changing status/severity or providing flags to override envs:
-```
-# Mark step success
-packtrack-logger --status success --severity info --message "step completed"
 
-# Record an error
+Override status/severity at call time:
+```
+packtrack-logger --status success --severity info --message "step completed"
 packtrack-logger --status error --severity error --message "failed to pick item" \
   --metadata '{"error":"picker jam","order_id":"ORD-42"}'
 ```
 
-## File and NDJSON Inputs
+## Using Files and NDJSON
 
-- From a JSON file (single event):
+Single event JSON file (event.json):
+```
+{
+  "timestamp": "2025-11-25T12:34:56Z",
+  "source": {"system": "factory-agents", "env": "prod"},
+  "workflow": {"id": "factory-workflow", "run_id": "RUN-001", "step_id": "pick"},
+  "actor": {"type": "agent", "id": "agent-123", "display_name": "PickerBot"},
+  "severity": "info",
+  "status": "running",
+  "message": "picking started",
+  "metadata": {"order_id": "ORD-42"}
+}
+```
+Send it:
 ```
 packtrack-logger --file ./event.json
 ```
-- From a JSON file (array of events):
+
+JSON array of events (events.json):
+```
+[
+  { "timestamp": "2025-11-25T12:34:56Z", "source": {"system": "factory-agents"},
+    "workflow": {"id": "factory-workflow"}, "actor": {"type": "agent", "id": "agent-123"},
+    "severity": "info", "status": "running", "message": "picking started" },
+  { "timestamp": "2025-11-25T12:36:00Z", "source": {"system": "factory-agents"},
+    "workflow": {"id": "factory-workflow"}, "actor": {"type": "agent", "id": "agent-123"},
+    "severity": "info", "status": "success", "message": "picking complete" }
+]
+```
+Send it:
 ```
 packtrack-logger --file ./events.json
 ```
-- NDJSON (newline-delimited JSON) from stdin:
+
+NDJSON from stdin (events.ndjson):
+```
+{"timestamp":"2025-11-25T12:34:56Z","source":{"system":"factory-agents"},"workflow":{"id":"factory-workflow"},"actor":{"type":"agent","id":"agent-123"},"severity":"info","status":"running","message":"picking started"}
+{"timestamp":"2025-11-25T12:36:00Z","source":{"system":"factory-agents"},"workflow":{"id":"factory-workflow"},"actor":{"type":"agent","id":"agent-123"},"severity":"info","status":"success","message":"picking complete"}
+```
+Send it:
 ```
 cat events.ndjson | packtrack-logger --stdin --ndjson
 ```
 
-## Health Check
+## Optional Features
 
-Verify connectivity and auth:
+- Health check (connectivity/auth):
 ```
 packtrack-logger --health --health-path /api/health
 ```
-Exit code 0 indicates OK; non-zero indicates a problem.
+- Async batching:
+```
+packtrack-logger --async --batch-size 100 --flush-interval 1s --queue-capacity 10000 \
+  --message "processed batch"
+```
+- Gzip compression (mainly for batches):
+```
+packtrack-logger --gzip --message "compressed batch"
+```
+- Idempotency (if re-sending the same event):
+```
+packtrack-logger --idempotency-key abc123 --message "dedupe-safe"
+```
 
 ## Exit Codes
 
@@ -122,43 +182,43 @@ Exit code 0 indicates OK; non-zero indicates a problem.
 - 3: retries exhausted (retryable error, e.g., 429/5xx after backoff)
 - 4: input/read/parse error (files or stdin)
 
-## Best Practices for Factory Agents
-
-- Use consistent IDs:
-  - workflow.id for the workflow definition (e.g., "factory-workflow")
-  - run_id for a specific execution (e.g., UUID per job)
-  - step_id for activity stage (e.g., "pick", "pack", "ship")
-- Severity vs Status:
-  - severity reflects log importance (debug/info/warn/error)
-  - status reflects state (running/success/error)
-- Redact secrets: Do not put credentials/tokens in message or metadata
-- Use metadata for structured fields (order_id, robot_id, SKU, durations)
-- Use idempotency when repeating sends for the same event
-- Prefer UTC timestamps; the CLI defaults to now in UTC if none provided
-
 ## Troubleshooting
 
-- 401/403: Invalid or missing PACKTRACK_API_KEY
-- 404: Check PACKTRACK_BASE_URL and API path
-- 429: Backoff and retry; CLI does this automatically
-- 5xx: Transient server issue; CLI retries with exponential backoff
-- Timeout: Adjust PACKTRACK_TIMEOUT (e.g., "30s")
-- Validation errors: Ensure required env or flags are set (source-system, workflow-id, actor-type, actor-id, severity, status, message)
+- 401/403: Invalid or missing `PACKTRACK_API_KEY`
+- 404: Verify `PACKTRACK_BASE_URL` and API path
+- 429: Rate limited; CLI automatically retries with backoff
+- 5xx: Transient server issue; CLI retries with backoff
+- Timeout: Increase `PACKTRACK_TIMEOUT` (e.g., `30s`)
+- Validation errors: Ensure required env/flags are set (`source-system`, `workflow-id`, `actor-type`, `actor-id`, `severity`, `status`, `message`)
 
-## CI/CD Usage
+## Best Practices
 
-Set env variables in your CI secret store and invoke the CLI in steps:
+- Use consistent IDs:
+  - `workflow.id` for the workflow (e.g., `factory-workflow`)
+  - `run_id` per execution/job
+  - `step_id` for stages (e.g., `pick`, `pack`, `ship`)
+- Severity vs Status:
+  - `severity` = importance of the log (debug/info/warn/error)
+  - `status` = lifecycle state (running/success/error)
+- Redact secrets: never put credentials/tokens in message or metadata
+- Prefer UTC; CLI defaults to UTC now if `timestamp` is omitted
+- Use metadata for structured fields (order_id, robot_id, SKU, durations)
+
+## Verification
+
+- Check health:
 ```
-- name: Log build start
-  run: packtrack-logger --message "factory build started"
-
-- name: Log build end
-  run: packtrack-logger --status success --message "factory build finished"
+packtrack-logger --health --health-path /api/health
 ```
+- Send a test event:
+```
+packtrack-logger --message "factory integration test"
+```
+Exit code `0` indicates success.
 
-## Where To Learn More
+## Reference
 
-- SDK quick start: README.md
-- CLI docs with full flags and env list: cmd/packtrack-logger/README.md
+- To see all flags: `packtrack-logger -h`
+- Flags always override environment variables.
 
-If you have questions or need access to PackTrack, contact the PackTrack team.
+If you need access or have questions, contact the PackTrack team.
